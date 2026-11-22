@@ -1,6 +1,8 @@
 name: DevOps Starter CI
 
 on:
+  pull_request:
+    branches: [ "main" ]
   push:
     branches: [ "main" ]
 
@@ -11,5 +13,11 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v6
 
-      - name: Execute system check script
+      - name: Execute system check script on host
         run: ./scripts/system_check.sh
+
+      - name: Build Docker image
+        run: docker build -t devops-health-check .
+
+      - name: Run container test
+        run: docker run --rm devops-health-check
