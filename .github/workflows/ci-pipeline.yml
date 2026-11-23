@@ -7,17 +7,22 @@ on:
     branches: [ "main" ]
 
 jobs:
-  run-health-check:
+  build-and-smoke-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository code
         uses: actions/checkout@v6
 
-      - name: Execute system check script on host
+      - name: Run host environment script
         run: ./scripts/system_check.sh
 
-      - name: Build Docker image
-        run: docker build -t devops-health-check .
+      - name: Build API Docker image
+        run: docker build -t devops-starter-api .
 
-      - name: Run container test
-        run: docker run --rm devops-health-check
+      - name: Start container and verify /health endpoint
+        run: |
+          docker run -d --name ci-api -p 8080:8080 devops-starter-api
+          sleep 3
+          curl --fail http://localhost:8080/health
+          docker stop ci-api
+          docker rm ci-api
