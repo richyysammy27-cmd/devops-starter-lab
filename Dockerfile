@@ -1,11 +1,19 @@
-FROM alpine:3.20
+FROM python:3.12-slim
 
-RUN apk add --no-cache bash
+# Prevent Python from buffering stdout/stderr (critical for Docker logs)
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-COPY scripts/system_check.sh .
+# Copy requirements first to leverage Docker layer caching
+COPY app/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN chmod +x system_check.sh
+# Copy the application code
+COPY app/ .
 
-CMD ["./system_check.sh"]
+# Document the port the container listens on
+EXPOSE 8080
+
+# Start the production web server
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "main:app"]
