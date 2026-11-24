@@ -1,4 +1,4 @@
-name: DevOps Starter CI
+name: DevOps Starter CI/CD
 
 on:
   pull_request:
@@ -6,8 +6,12 @@ on:
   push:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
-  build-and-smoke-test:
+  build-test-and-push:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository code
@@ -26,3 +30,20 @@ jobs:
           curl --fail http://localhost:8080/health
           docker stop ci-api
           docker rm ci-api
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag and push image to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker tag devops-starter-api:latest "${IMAGE_NAME}:latest"
+          docker tag devops-starter-api:latest "${IMAGE_NAME}:${{ github.sha }}"
+          docker push "${IMAGE_NAME}:latest"
+          docker push "${IMAGE_NAME}:${{ github.sha }}"
