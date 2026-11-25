@@ -1,8 +1,13 @@
 import os
 import socket
 from flask import Flask, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+
+# Allow frontend origins (defaults to '*' for easy testing; lock down in production)
+allowed_origins = os.environ.get("ALLOWED_ORIGINS", "*")
+CORS(app, resources={r"/*": {"origins": allowed_origins}})
 
 @app.route("/")
 def home():
