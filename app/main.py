@@ -57,6 +57,35 @@ def config():
     }), 200
 
 
+@app.route("/status")
+def status():
+    return jsonify({
+        "service": "devops-starter-api",
+        "hostname": socket.gethostname(),
+        "mode": "docker-gunicorn"
+    }), 200
+
+
+@app.route("/echo", methods=["POST"])
+def echo():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "Request body must be valid JSON"}), 400
+
+    message = str(data.get("message", "")).strip()
+    tag = str(data.get("tag", "general")).strip() or "general"
+
+    if not message:
+        return jsonify({"error": "Field 'message' is required"}), 400
+
+    return jsonify({
+        "received": True,
+        "message": message,
+        "tag": tag,
+        "hostname": socket.gethostname()
+    }), 201
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
