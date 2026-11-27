@@ -50,7 +50,6 @@ def health():
 
 
 @app.route("/config")
-@require_api_key
 def config():
     return jsonify({
         "app_env": os.environ.get("APP_ENV", "development"),
